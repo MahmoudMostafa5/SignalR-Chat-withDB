@@ -1,0 +1,110 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Chat</title>
+    <script src="Scripts/jquery-1.6.4.js"></script>
+    <script src="Scripts/jquery.signalR-2.4.3.js"></script>
+    <style>
+        input {
+            width: 300px;
+            padding: 5px;
+            margin: 5px;
+            font-size: 30px;
+            color: indigo;
+        }
+        li {
+            padding: 5px;
+            margin: 5px;
+            font-size: 30px;
+            color: indigo;
+        }
+        button {
+            width: 100px;
+            padding: 5px;
+            margin: 5px;
+            font-size: 25px;
+            background-color: aqua
+        }
+    </style>
+    <!-- Create Proxy -->
+    <script>
+        $(function () {
+            name = prompt("Enter Your Name");
+
+            //define Connection
+            let connection = $.hubConnection();
+
+            //Create Proxy
+            chatProxy = connection.createHubProxy("chat");
+
+            //Start Connection
+            connection.start();
+            //alert("Connection Start")
+
+            //define callBack Fun(new Message)
+            chatProxy.on("newMessage", function (n, m) {
+                //alert("New Message from Server")
+                $("ul").append("<li>" + n + " : " + m + "</li>");
+                //$("ul").append("<li>" + m.Name + " : " + m.Message1 + " - " + m.Date + "</li>");
+            })
+
+            chatProxy.on("newMember", function (name, group) {
+                $("ul").append("<li><i><b>" + name + " : " + group + "</b></i></li>");
+            })
+
+            chatProxy.on("messageGroup", function (group, name, message) {
+                $("ul").append("<li><i><b>" + name + " ( " + group + " ) : " + message + "</b></i></li>");
+            })
+        })
+
+        function send() {
+            //call server method (sendMessage)
+            //alert("Call Server Method to call Message")
+            chatProxy.invoke("sendMessage", name, $("#txt").val());
+        }
+        function send2() {
+            chatProxy.invoke("sendMessage", name, "Typing .... ");
+        }
+
+        function join() {
+            chatProxy.invoke("joinGroup", $("#gtxt").val(), name);
+        }
+
+        function sentGroup() {
+            chatProxy.invoke("sentToGroup", $("#gtxt").val(), name, $("#txt").val());
+        }
+    </script>
+    <!-- Without Proxy -->
+    <!--<script src="/signalr/hubs"></script>
+    <script>
+        $(function () {
+            name = prompt("Enter Your Name")
+            con = $.connection.chat;
+
+            $.connection.hub.start();
+
+            con.client.newMessage = function (n, m) {
+                $("ul").append("<li>" + n + " : " + m + "</li>");
+            }
+        })
+        function send() {
+            con.server.sendMessage(name, $("#txt").val());
+        }
+
+    </script>-->
+</head>
+<body>
+
+    <input type="text" id="txt" onkeyup="send2()"/>
+    <button onclick="send()">Send</button>
+    <br /><br /><br />
+    <input type="text" id="gtxt" />
+    <button onclick="join()">Join</button>
+    <br /><br />
+    <button style="width:150px;font-size:20px;" onclick="sentGroup()">Sent To Group</button>
+    <ul>
+    </ul>
+
+</body>
+</html>
